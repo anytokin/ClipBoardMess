@@ -1,0 +1,90 @@
+name: Build and release Windows EXE
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - run: uv sync --locked
+
+      - name: Check release tag
+        if: github.ref_type == 'tag'
+        shell: pwsh
+        run: |
+          $version = uv run --locked python -c "from importlib.metadata import version; print(version('clipboardmess'))"
+          if ($LASTEXITCODE -ne 0 -or $env:GITHUB_REF_NAME -cne "v$version") {
+            throw "Expected release tag v$version, got $env:GITHUB_REF_NAME."
+          }
+
+      - name: Build EXE
+        run: uv run --locked pyinstaller --onefile --noconsole --name ClipBoardMess --add-data "src/clipboardmess/prompts.txt:." src/clipboardmess/main.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ClipBoardMess
+          path: dist/ClipBoardMess.exe
+          if-no-files-found: error
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ClipBoardMess
+          path: dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: |
+            dist/ClipBoardMess.exe
+            install.ps1
+
+  pages:
+    if: github.event.repository.has_pages
+    needs: release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ClipBoardMess
+          path: site
+
+      - run: cp install.ps1 site/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - uses: actions/deploy-pages@v4
+        id: deploy

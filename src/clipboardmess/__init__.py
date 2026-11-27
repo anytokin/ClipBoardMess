@@ -1,0 +1,1 @@
+"""ClipBoardMess clipboard watcher."""
