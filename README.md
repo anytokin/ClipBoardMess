@@ -4,19 +4,16 @@ ClipBoardMess watches the Windows clipboard and occasionally replaces copied tex
 
 ## Install on Windows
 
-For this private repository, sign in with GitHub CLI, then download and run the release installer from a new directory.
-
 ```powershell
-gh release download -R anytokin/ClipBoardMess --pattern install.ps1 --pattern ClipBoardMess.exe
-powershell -ExecutionPolicy Bypass -File .\install.ps1 -SourceExe .\ClipBoardMess.exe
+powershell -ExecutionPolicy Bypass -c "irm https://anytokin.github.io/ClipBoardMess/install.ps1 | iex"
 ```
 
 The installer puts the EXE in `%LOCALAPPDATA%\Programs\ClipBoardMess`, adds it to your user PATH, and creates a shortcut in your Windows Startup folder. The app starts at your next sign-in. Use `-NoStartup` to skip creating the shortcut or manage the existing entry in **Settings > Apps > Startup**. Use `-NoModifyPath` to skip the PATH change.
 
-When GitHub Pages is enabled with GitHub Actions as the publishing source, the tagged release workflow also publishes the installer and EXE to Pages.
+To install from a downloaded release, save `install.ps1` and `ClipBoardMess.exe` in the same directory and run the command below from that directory. [GitHub Releases](https://github.com/anytokin/ClipBoardMess/releases/latest)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://anytokin.github.io/ClipBoardMess/install.ps1 | iex"
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -SourceExe .\ClipBoardMess.exe
 ```
 
 ## Build from source
